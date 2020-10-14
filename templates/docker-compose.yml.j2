@@ -57,7 +57,7 @@ services:
     mem_limit: 512M
 {% endif %}
 {% if use_docker_php %}
-  python:
+  php:
     build: "./docker_php/"
     environment:
       - DB_USER={{ db_user }}
