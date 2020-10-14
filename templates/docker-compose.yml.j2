@@ -1,0 +1,117 @@
+version: "2.4"
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: {{ docker_network_subnet }}
+
+services:
+
+{% if use_docker_nginx  %}
+  nginx:
+    build: "./docker_nginx/"
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/log/nginx/:/var/log/nginx/
+      - certs:/etc/ssl/certs/
+      - keys:/etc/ssl/private/
+      - sites_enabled:/etc/nginx/sites-enabled
+    networks:
+      default:
+        ipv4_address: {{ docker_nginx_ip }}
+    mem_limit: 256M
+{% endif %}
+{% if use_docker_node %}
+  node:
+    build: "./docker_node"
+    volumes:
+      - {{ node_app_dir }}:{{ node_app_dir }}
+      - {{ node_app_dir }}/node_modules
+      - certs:/etc/ssl/certs/
+      - keys:/etc/ssl/private/
+      - sites_enabled:/etc/nginx/sites-enabled
+    networks:
+      default:
+        ipv4_address: {{ docker_node_ip }}
+    mem_limit: 2048M
+    stdin_open: true
+{% endif %}
+{% if use_docker_mysql %}
+  mysql:
+    build: "./docker_mysql/"
+    environment:
+      - MYSQL_ROOT_PASSWORD={{ db_root_password }}
+      - MYSQL_USER={{ db_user }}
+      - MYSQL_PASSWORD={{ db_password }}
+      - MYSQL_DATABASE={{ db_name }}
+    volumes:
+      - /var/lib/mysql/data/:/var/lib/mysql/data/
+    ports:
+      - 3306:3306
+    networks:
+      default:
+        ipv4_address: {{ docker_mysql_ip }}
+    mem_limit: 512M
+{% endif %}
+{% if use_docker_php %}
+  python:
+    build: "./docker_php/"
+    environment:
+      - DB_USER={{ db_user }}
+      - DB_PASSWORD={{ db_password }}
+      - DB_NAME={{ db_name }}
+      - DB_HOST={{ docker_mysql_ip }}
+      - DB_PORT=3306
+    volumes:
+      - {{ php_app_dir }}:{{ php_app_dir }}
+      - certs:/etc/ssl/certs/
+      - keys:/etc/ssl/private/
+      - sites_enabled:/etc/nginx/sites-enabled
+    networks:
+      default:
+        ipv4_address: {{ docker_php_ip }}
+    mem_limit: 4096M
+{% endif %}
+{% if use_docker_postgres %}
+  postgres:
+    build: "./docker_postgres/"
+    environment:
+      - POSTGRES_DB={{ db_name }}
+      - POSTGRES_USER={{ db_user }}
+      - POSTGRES_PASSWORD={{ db_password }}
+    volumes:
+      - /var/lib/postgres:/var/lib/postgres
+    ports:
+      - 5432:5432
+    networks:
+      default:
+        ipv4_address: {{ docker_postgres_ip }}
+    mem_limit: 512M
+{% endif %}
+{% if use_docker_python %}
+  python:
+    build: "./docker_python/"
+    environment:
+      - DB_USER={{ db_user }}
+      - DB_PASSWORD={{ db_password }}
+      - DB_NAME={{ db_name }}
+      - DB_HOST={{ docker_mysql_ip }}
+      - DB_PORT=3306
+    volumes:
+      - {{ python_app_dir }}:{{ python_app_dir }}
+      - certs:/etc/ssl/certs/
+      - keys:/etc/ssl/private/
+      - sites_enabled:/etc/nginx/sites-enabled
+    networks:
+      default:
+        ipv4_address: {{ docker_python_ip }}
+    mem_limit: 4096M
+{% endif %}
+
+volumes:
+  certs:
+  keys:
+  sites_enabled:
