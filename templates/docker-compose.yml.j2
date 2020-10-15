@@ -4,11 +4,11 @@ networks:
   default:
     ipam:
       config:
-        - subnet: {{ docker_network_subnet }}
+        - subnet: {{ network.docker.subnet }}
 
 services:
 
-{% if use_docker_nginx  %}
+{% if use.docker_nginx  %}
   nginx:
     build: "./docker_nginx/"
     ports:
@@ -16,102 +16,90 @@ services:
       - 443:443
     volumes:
       - /var/log/nginx/:/var/log/nginx/
-      - certs:/etc/ssl/certs/
-      - keys:/etc/ssl/private/
-      - sites_enabled:/etc/nginx/sites-enabled
     networks:
       default:
-        ipv4_address: {{ docker_nginx_ip }}
+        ipv4_address: {{ network.docker.nginx_ip }}
     mem_limit: 256M
 {% endif %}
-{% if use_docker_node %}
+{% if use.docker_node %}
   node:
     build: "./docker_node"
     volumes:
-      - {{ node_app_dir }}:{{ node_app_dir }}
-      - {{ node_app_dir }}/node_modules
-      - certs:/etc/ssl/certs/
-      - keys:/etc/ssl/private/
-      - sites_enabled:/etc/nginx/sites-enabled
+      - {{ dir.node_app }}:{{ dir.node_app }}
+      - {{ dir.node_app }}/node_modules
     networks:
       default:
-        ipv4_address: {{ docker_node_ip }}
+        ipv4_address: {{ network.docker.node_ip }}
     mem_limit: 2048M
     stdin_open: true
 {% endif %}
-{% if use_docker_mysql %}
+{% if use.docker_mysql %}
   mysql:
     build: "./docker_mysql/"
     environment:
-      - MYSQL_ROOT_PASSWORD={{ db_root_password }}
-      - MYSQL_USER={{ db_user }}
-      - MYSQL_PASSWORD={{ db_password }}
-      - MYSQL_DATABASE={{ db_name }}
+      - MYSQL_ROOT_PASSWORD={{ db.root_password }}
+      - MYSQL_USER={{ db.user }}
+      - MYSQL_PASSWORD={{ db.password }}
+      - MYSQL_DATABASE={{ db.name }}
     volumes:
       - /var/lib/mysql/data/:/var/lib/mysql/data/
     ports:
       - 3306:3306
     networks:
       default:
-        ipv4_address: {{ docker_mysql_ip }}
+        ipv4_address: {{ network.docker.mysql_ip }}
     mem_limit: 512M
 {% endif %}
-{% if use_docker_php %}
+{% if use.docker_php %}
   php:
     build: "./docker_php/"
     environment:
-      - DB_USER={{ db_user }}
-      - DB_PASSWORD={{ db_password }}
-      - DB_NAME={{ db_name }}
-      - DB_HOST={{ docker_mysql_ip }}
+      - DB_USER={{ db.user }}
+      - DB_PASSWORD={{ db.password }}
+      - DB_NAME={{ db.name }}
+      - DB_HOST={{ network.docker.mysql_ip }}
       - DB_PORT=3306
     volumes:
-      - {{ php_app_dir }}:{{ php_app_dir }}
-      - certs:/etc/ssl/certs/
-      - keys:/etc/ssl/private/
-      - sites_enabled:/etc/nginx/sites-enabled
+      - {{ dir.php_app }}:{{ dir.php_app }}
     networks:
       default:
-        ipv4_address: {{ docker_php_ip }}
+        ipv4_address: {{ network.docker.php_ip }}
+    ports:
+      - 9001:9001
     mem_limit: 4096M
 {% endif %}
-{% if use_docker_postgres %}
+{% if use.docker_postgres %}
   postgres:
     build: "./docker_postgres/"
     environment:
-      - POSTGRES_DB={{ db_name }}
-      - POSTGRES_USER={{ db_user }}
-      - POSTGRES_PASSWORD={{ db_password }}
+      - POSTGRES_DB={{ db.name }}
+      - POSTGRES_USER={{ db.user }}
+      - POSTGRES_PASSWORD={{ db.password }}
     volumes:
       - /var/lib/postgres:/var/lib/postgres
     ports:
       - 5432:5432
     networks:
       default:
-        ipv4_address: {{ docker_postgres_ip }}
+        ipv4_address: {{ network.docker.postgres_ip }}
     mem_limit: 512M
 {% endif %}
-{% if use_docker_python %}
+{% if use.docker_python %}
   python:
     build: "./docker_python/"
     environment:
-      - DB_USER={{ db_user }}
-      - DB_PASSWORD={{ db_password }}
-      - DB_NAME={{ db_name }}
-      - DB_HOST={{ docker_mysql_ip }}
+      - DB_USER={{ db.user }}
+      - DB_PASSWORD={{ db.password }}
+      - DB_NAME={{ db.name }}
+      - DB_HOST={{ network.docker.mysql_ip }}
       - DB_PORT=3306
     volumes:
-      - {{ python_app_dir }}:{{ python_app_dir }}
+      - {{ dir.python_app }}:{{ dir.python_app }}
       - certs:/etc/ssl/certs/
       - keys:/etc/ssl/private/
       - sites_enabled:/etc/nginx/sites-enabled
     networks:
       default:
-        ipv4_address: {{ docker_python_ip }}
+        ipv4_address: {{ network.docker.python_ip }}
     mem_limit: 4096M
 {% endif %}
-
-volumes:
-  certs:
-  keys:
-  sites_enabled:
