@@ -95,9 +95,6 @@ services:
       - DB_PORT=3306
     volumes:
       - {{ dir.python_app }}:{{ dir.python_app }}
-      - certs:/etc/ssl/certs/
-      - keys:/etc/ssl/private/
-      - sites_enabled:/etc/nginx/sites-enabled
     networks:
       default:
         ipv4_address: {{ network.docker.python_ip }}
